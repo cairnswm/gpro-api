@@ -17,11 +17,18 @@ $contextCode[] = "  const [lang, setLang] = useState('gb');";
 $contextCode[] = "  const [authToken, setAuthToken] = useState(null);";
 $contextCode[] = "";
 
+$functions = array();
+
 foreach ($openapiSpec['paths'] as $path => $methods) {
     foreach ($methods as $method => $details) {
         // Generate function name from the last part of the path
         $pathParts = explode('/', trim($path, '/'));
         $functionName = 'get' . ucfirst(end($pathParts));
+
+        // Ensure each function is only created once
+        if (isset($functions[$functionName])) {
+            continue;
+        }
 
         // Collect parameters
         $params = array();
@@ -64,17 +71,16 @@ foreach ($openapiSpec['paths'] as $path => $methods) {
         $contextCode[] = "    }";
         $contextCode[] = "  };";
         $contextCode[] = "";
+
+        // Mark the function as created
+        $functions[$functionName] = true;
     }
 }
 
 $contextCode[] = "  return (";
 $contextCode[] = "    <GproContext.Provider value={{ lang, setLang, authToken, setAuthToken,";
-foreach ($openapiSpec['paths'] as $path => $methods) {
-    foreach ($methods as $method => $details) {
-        $pathParts = explode('/', trim($path, '/'));
-        $functionName = 'get' . ucfirst(end($pathParts));
-        $contextCode[] = "      $functionName,";
-    }
+foreach ($functions as $functionName => $unused) {
+    $contextCode[] = "      $functionName,";
 }
 $contextCode[] = "    }}> ";
 $contextCode[] = "      {children}";
